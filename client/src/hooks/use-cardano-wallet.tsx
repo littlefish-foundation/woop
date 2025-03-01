@@ -9,6 +9,7 @@ export interface Asset {
 
 export interface WalletInfo {
   address: string;
+  handle: string | null;
   name: string;
   balance: {
     lovelace: string;
@@ -117,9 +118,27 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
         };
       }
       
+      // Fetch handle info for the address (in production, this would use the real connected wallet address)
+      let handleInfo = null;
+      try {
+        // For demo purposes, we'll use a test address
+        // In production, this would be the actual wallet address
+        const testAddress = "addr1q8zsjx7vxkl4esfejafhxthyew8c54c9ch95gkv3nz37sxrc9ty742qncmffaesxqarvqjmxmy36d9aht2duhmhvekgq3jd3w2";
+        console.log("Checking for handle...");
+        
+        const handleResponse = await fetch(`/api/handle/${testAddress}`);
+        if (handleResponse.ok) {
+          handleInfo = await handleResponse.json();
+          console.log("Handle info received:", handleInfo);
+        }
+      } catch (handleError) {
+        console.error('Error fetching handle:', handleError);
+      }
+      
       // Create wallet info
       const walletInfo: WalletInfo = {
         address: mockAddress,
+        handle: handleInfo?.handle || null,
         name: walletName,
         balance: walletBalance,
         network: 1 // mainnet (1) instead of testnet (0)

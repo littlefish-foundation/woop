@@ -54,7 +54,9 @@ export function ConnectionStatusIndicator() {
     },
     connected: {
       icon: <Check className="h-4 w-4 text-emerald-500" />,
-      text: `Connected to ${walletState.walletInfo?.name || "wallet"}`,
+      text: walletState.walletInfo?.handle 
+        ? `Connected to ${walletState.walletInfo.name} ($${walletState.walletInfo.handle})`
+        : `Connected to ${walletState.walletInfo?.name || "wallet"}`,
       bgColor: "bg-emerald-50 border-emerald-200",
       textColor: "text-emerald-700"
     },

@@ -199,8 +199,10 @@ export function WalletConnect() {
         >
           <WalletIcon className="h-4 w-4" />
           <span className="truncate max-w-[100px]">
-            {walletState.walletInfo?.address.substring(0, 8)}...
-            {walletState.walletInfo?.address.substring(walletState.walletInfo.address.length - 4)}
+            {walletState.walletInfo?.handle 
+              ? `$${walletState.walletInfo.handle}`
+              : `${walletState.walletInfo?.address.substring(0, 8)}...${walletState.walletInfo?.address.substring(walletState.walletInfo.address.length - 4)}`
+            }
           </span>
         </Button>
         
@@ -213,6 +215,13 @@ export function WalletConnect() {
                 {walletState.walletInfo?.network === 0 ? "Testnet" : "Mainnet"}
               </Badge>
             </div>
+            {walletState.walletInfo?.handle && (
+              <div className="mb-2">
+                <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-200 text-sm font-medium py-1 px-2">
+                  ${walletState.walletInfo.handle}
+                </Badge>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground break-all">{walletState.walletInfo?.address}</p>
           </div>
           
