@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Make request to Blockfrost
+      // Make request to Blockfrost - using mainnet API
       const response = await fetch(`https://cardano-mainnet.blockfrost.io/api/v0/addresses/${address}`, {
         headers: {
           'project_id': apiKey,

@@ -122,7 +122,7 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
         address: mockAddress,
         name: walletName,
         balance: walletBalance,
-        network: 0 // testnet
+        network: 1 // mainnet (1) instead of testnet (0)
       };
       
       // Update state
