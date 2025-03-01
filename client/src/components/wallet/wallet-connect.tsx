@@ -189,7 +189,7 @@ export function WalletConnect() {
     <div className="relative group">
       <Button 
         variant="outline" 
-        className="gap-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+        className="gap-2 border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100 hover:text-teal-800"
       >
         <WalletIcon className="h-4 w-4" />
         <span className="truncate max-w-[100px]">
@@ -199,7 +199,7 @@ export function WalletConnect() {
       </Button>
       
       {/* Wallet dropdown */}
-      <div className="absolute right-0 mt-2 w-72 p-4 rounded-md shadow-lg bg-white border border-gray-200 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50">
+      <div className="absolute right-0 mt-2 w-80 p-5 rounded-md shadow-lg bg-white border border-gray-200 invisible group-hover:visible opacity-0 group-hover:opacity-100 transition-all duration-200 z-50">
         <div className="mb-3 pb-3 border-b border-gray-100">
           <div className="flex items-center justify-between mb-2">
             <h4 className="font-medium">{walletState.walletInfo?.name}</h4>
