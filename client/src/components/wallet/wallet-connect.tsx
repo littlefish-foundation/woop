@@ -76,6 +76,19 @@ export function WalletConnect() {
                   <span>Eternl</span>
                 </a>
                 <a 
+                  href="https://vespr.xyz/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center p-4 rounded-lg border hover:border-primary transition-colors"
+                >
+                  <img 
+                    src="https://vespr.xyz/favicon-32x32.png" 
+                    alt="Vespr" 
+                    className="h-8 w-8 mb-2" 
+                  />
+                  <span>Vespr</span>
+                </a>
+                <a 
                   href="https://flint-wallet.com/" 
                   target="_blank" 
                   rel="noopener noreferrer"
@@ -100,6 +113,45 @@ export function WalletConnect() {
                     className="h-8 w-8 mb-2" 
                   />
                   <span>Yoroi</span>
+                </a>
+                <a 
+                  href="https://www.lace.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center p-4 rounded-lg border hover:border-primary transition-colors"
+                >
+                  <img 
+                    src="https://www.lace.io/favicon-32x32.png" 
+                    alt="Lace" 
+                    className="h-8 w-8 mb-2" 
+                  />
+                  <span>Lace</span>
+                </a>
+                <a 
+                  href="https://gerowallet.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center p-4 rounded-lg border hover:border-primary transition-colors"
+                >
+                  <img 
+                    src="https://gerowallet.io/wp-content/uploads/2021/07/cropped-favicon-1-192x192.png" 
+                    alt="GeroWallet" 
+                    className="h-8 w-8 mb-2" 
+                  />
+                  <span>GeroWallet</span>
+                </a>
+                <a 
+                  href="https://typhonwallet.io/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center p-4 rounded-lg border hover:border-primary transition-colors"
+                >
+                  <img 
+                    src="https://typhonwallet.io/favicon.ico" 
+                    alt="Typhon" 
+                    className="h-8 w-8 mb-2" 
+                  />
+                  <span>Typhon</span>
                 </a>
               </div>
             </div>

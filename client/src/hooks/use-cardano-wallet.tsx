@@ -62,7 +62,7 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
   // Mock implementation for available wallets
   useEffect(() => {
     // Simulate loading wallets
-    const mockWallets = ['Nami', 'Eternl', 'Flint', 'Yoroi'];
+    const mockWallets = ['Nami', 'Eternl', 'Flint', 'Yoroi', 'Vespr', 'Lace', 'GeroWallet', 'Typhon'];
     
     setTimeout(() => {
       setAvailableWallets(mockWallets);
