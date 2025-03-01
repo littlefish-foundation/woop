@@ -35,6 +35,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Loader2, PlusCircle, ShoppingCart, Calendar, MapPin } from "lucide-react";
+import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -354,6 +355,7 @@ export default function ActionsPage() {
           <TabsList className="flex space-x-2">
             <TabsTrigger value="all">All Actions</TabsTrigger>
             <TabsTrigger value="my">My Actions</TabsTrigger>
+            <TabsTrigger value="purchased">My Purchases</TabsTrigger>
           </TabsList>
           
           <TabsContent value="all" className="space-y-8">
@@ -510,6 +512,91 @@ export default function ActionsPage() {
                 <Button onClick={() => setCreateDialogOpen(true)}>
                   <PlusCircle className="mr-2 h-4 w-4" />
                   Create Action
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="purchased" className="space-y-8">
+            {actions.filter(action => action.purchased && action.purchaserId === user?.id).length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {actions.filter(action => action.purchased && action.purchaserId === user?.id).map((action) => (
+                  <Card key={action.id} className="overflow-hidden hover:shadow-md transition duration-200 border border-gray-200">
+                    <div className="h-56 relative overflow-hidden">
+                      <img 
+                        src={action.image || "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"} 
+                        alt={action.title} 
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full py-1 px-3 flex items-center text-sm font-medium text-primary-700">
+                        <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <span>{action.price} ADA</span>
+                      </div>
+                      <div className="absolute top-4 left-4 flex flex-col space-y-2">
+                        <Badge variant="default" className="bg-purple-600/90 text-white backdrop-blur-sm">
+                          Owned
+                        </Badge>
+                        <Badge variant="default" className={`
+                          backdrop-blur-sm
+                          ${action.category === 'Environmental' ? 'bg-blue-600/90' : ''}
+                          ${action.category === 'Agriculture' ? 'bg-green-600/90' : ''}
+                          ${action.category === 'Education' ? 'bg-purple-600/90' : ''}
+                          ${action.category === 'Community' ? 'bg-orange-600/90' : ''}
+                          ${action.category === 'Technology' ? 'bg-indigo-600/90' : ''}
+                          ${action.category === 'Healthcare' ? 'bg-red-600/90' : ''}
+                          ${action.category === 'Arts' ? 'bg-pink-600/90' : ''}
+                        `}>
+                          {action.category}
+                        </Badge>
+                      </div>
+                    </div>
+                    <CardContent className="p-5">
+                      <div className="flex items-center mb-3">
+                        <Avatar className="h-9 w-9 mr-3">
+                          <AvatarImage src={`https://i.pravatar.cc/150?img=${action.creatorId + 10}`} alt="Creator" />
+                          <AvatarFallback>{getCreatorName(action).charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{getCreatorName(action)}</p>
+                          <p className="text-xs text-gray-500">{getWooperativeName(action)}</p>
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-bold text-primary-800 mb-2">{action.title}</h3>
+                      <p className="text-gray-600 text-sm mb-4">{action.description}</p>
+                      <div className="flex items-center space-x-4 text-xs text-gray-500 mb-4">
+                        <div className="flex items-center">
+                          <Calendar className="h-3.5 w-3.5 mr-1" />
+                          <span>Purchased: {action.purchasedAt ? formatDate(action.purchasedAt) : formatDate(new Date())}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <MapPin className="h-3.5 w-3.5 mr-1" />
+                          <span>{action.location}</span>
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div className="text-xs text-gray-500">
+                          NFT #{action.nftId}
+                        </div>
+                        <Button variant="outline" className="text-sm">
+                          View Certificate
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-16">
+                <ShoppingCart className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No purchases yet</h3>
+                <p className="text-gray-500 max-w-md mx-auto mb-6">You haven't purchased any actions yet. Check out the marketplace to invest in verified impact.</p>
+                <Button asChild>
+                  <Link href="/marketplace">
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Go to Marketplace
+                  </Link>
                 </Button>
               </div>
             )}
