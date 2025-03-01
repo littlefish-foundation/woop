@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 
 export function WalletAuth() {
@@ -54,16 +54,11 @@ export function WalletAuth() {
       
       const authData = await response.json();
       
-      // If we have a token, use it to authenticate the user
-      if (authData.token) {
-        // For a token-based auth system, store the token
-        localStorage.setItem('authToken', authData.token);
-        
-        // If we have user info, update the auth context
-        if (authData.user) {
-          // Update auth context with the user
-          loginMutation.mutate(authData.user);
-        }
+      // If we have user info, update the auth context
+      if (authData.user) {
+        // The session has already been updated on the server side
+        // We just need to refresh the user object in the client
+        queryClient.setQueryData(["/api/user"], authData.user);
       }
       
       toast({

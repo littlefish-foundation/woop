@@ -13,16 +13,19 @@ import {
   Search,
   Bell,
   Menu,
-  Wallet,
   ChevronDown,
   LogOut,
   User as UserIcon,
   Settings,
+  Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { WalletAuth } from "@/components/wallet/wallet-auth";
+import { useCardanoWallet } from "@/hooks/use-cardano-wallet";
 
 export function Header() {
   const [location] = useLocation();
@@ -140,14 +143,11 @@ export function Header() {
             </DropdownMenu>
           )}
           
-          {/* Connect Wallet Button */}
-          <Button 
-            variant="default" 
-            className="hidden md:flex items-center space-x-2"
-          >
-            <Wallet className="h-4 w-4" />
-            <span className="font-medium">Connect Wallet</span>
-          </Button>
+          {/* Wallet Connection */}
+          <div className="hidden md:flex items-center space-x-2">
+            <WalletConnect />
+            {mounted && user && <WalletAuth />}
+          </div>
           
           {/* Mobile Menu Button */}
           <Button 
@@ -181,13 +181,10 @@ export function Header() {
                   {item.name}
                 </Link>
               ))}
-              <Button 
-                variant="default" 
-                className="mt-4 flex items-center justify-center"
-              >
-                <Wallet className="h-4 w-4 mr-2" />
-                <span className="font-medium">Connect Wallet</span>
-              </Button>
+              <div className="mt-4 flex flex-col space-y-2">
+                <WalletConnect />
+                {mounted && user && <WalletAuth />}
+              </div>
             </nav>
           </div>
         </div>

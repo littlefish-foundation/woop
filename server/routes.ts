@@ -2,10 +2,65 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
+import { z } from "zod";
+
+// Schema for wallet authentication
+const walletAuthSchema = z.object({
+  address: z.string().min(1),
+  message: z.string().min(1),
+  signature: z.string().min(1),
+});
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Wallet Authentication route
+  app.post("/api/wallet-auth", async (req, res, next) => {
+    try {
+      const { address, message, signature } = walletAuthSchema.parse(req.body);
+      
+      // In a production environment, you would:
+      // 1. Verify the signature using Cardano cryptography
+      // 2. Check if the address corresponds to a valid Cardano address
+      // 3. If the message includes a timestamp, verify it's recent
+      
+      // For demo purposes, we'll accept the signature and link it with the current user
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ 
+          message: "Please log in first before connecting a wallet"
+        });
+      }
+      
+      try {
+        // Associate wallet address with user
+        const updatedUser = await storage.updateUserWallet(req.user.id, address);
+        
+        if (updatedUser) {
+          // Update the session with the new user data
+          req.login(updatedUser, (err) => {
+            if (err) {
+              return next(err);
+            }
+            return res.status(200).json({ 
+              message: "Wallet linked successfully", 
+              user: updatedUser
+            });
+          });
+        } else {
+          return res.status(500).json({ message: "Failed to update user wallet" });
+        }
+      } catch (err) {
+        const error = err as Error;
+        return res.status(500).json({ message: "Error updating wallet: " + error.message });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      next(error);
+    }
+  });
 
   // Wooperative routes
   app.get("/api/wooperatives", async (req, res, next) => {

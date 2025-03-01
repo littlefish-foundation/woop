@@ -10,7 +10,9 @@ export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByWalletAddress(address: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUserWallet(userId: number, walletAddress: string): Promise<User | undefined>;
   
   // Wooperative operations
   getWooperative(id: number): Promise<Wooperative | undefined>;
@@ -74,6 +76,26 @@ export class MemStorage implements IStorage {
     return Array.from(this.users.values()).find(
       (user) => user.username === username,
     );
+  }
+  
+  async getUserByWalletAddress(address: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(
+      (user) => user.walletAddress === address,
+    );
+  }
+  
+  async updateUserWallet(userId: number, walletAddress: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    
+    if (!user) {
+      return undefined;
+    }
+    
+    // Update the user's wallet address
+    user.walletAddress = walletAddress;
+    this.users.set(userId, user);
+    
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

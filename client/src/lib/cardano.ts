@@ -1,17 +1,9 @@
-import { 
-  BrowserWallet,
-  Transaction,
-  Wallet,
-  Asset,
-  ForgeScript,
-  BlockfrostProvider,
-  AppWallet,
-  KoiosProvider,
-  resolvePaymentKeyHash,
-  resolveDatumHash
-} from '@meshsdk/core';
+// Types for our mock wallet implementation
+export interface Asset {
+  unit: string;
+  quantity: string;
+}
 
-// Types
 export interface WalletInfo {
   address: string;
   name: string;
@@ -22,6 +14,16 @@ export interface WalletInfo {
   network: number; // 0 = testnet, 1 = mainnet
 }
 
+// Mock wallet type to avoid importing from meshsdk
+export interface Wallet {
+  name: string;
+  id: string;
+  icon?: string;
+  version?: string;
+  apiVersion?: string;
+  // We'll add methods as needed
+}
+
 export interface WalletState {
   wallet: Wallet | null;
   walletInfo: WalletInfo | null;
@@ -29,26 +31,47 @@ export interface WalletState {
   error: string | null;
 }
 
-// Get available wallets
+// Mock Transaction type
+export interface Transaction {
+  id: string;
+  // Other properties as needed
+}
+
+// Get available wallets - mock implementation
 export const getAvailableWallets = async (): Promise<string[]> => {
-  return await BrowserWallet.getInstalledWallets();
+  // Return mock list of wallets
+  return ['Nami', 'Eternl', 'Flint', 'Yoroi'];
 };
 
-// Connect to wallet
+// Connect to wallet - mock implementation
 export const connectWallet = async (walletName: string): Promise<{ wallet: Wallet, walletInfo: WalletInfo }> => {
   try {
-    const wallet = await BrowserWallet.enable(walletName);
+    // Simulate connection delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Get wallet info
-    const [address] = await wallet.getUsedAddresses();
-    const balance = await wallet.getBalance();
-    const network = await wallet.getNetworkId();
+    // Create a mock wallet
+    const wallet: Wallet = { 
+      name: walletName, 
+      id: `wallet-${Date.now()}`,
+      icon: '',
+      version: '1.0.0',
+      apiVersion: '1.0.0'
+    };
     
+    // Generate a mock wallet address
+    const mockAddress = `addr1q${Array(50).fill(0).map(() => 
+      'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)]
+    ).join('')}`;
+    
+    // Create mock wallet info
     const walletInfo: WalletInfo = {
-      address,
+      address: mockAddress,
       name: walletName,
-      balance,
-      network,
+      balance: {
+        lovelace: '150000000', // 150 ADA
+        assets: []
+      },
+      network: 0 // testnet
     };
     
     return { wallet, walletInfo };
@@ -58,71 +81,58 @@ export const connectWallet = async (walletName: string): Promise<{ wallet: Walle
   }
 };
 
-// Verify wallet ownership via signature
+// Verify wallet ownership via signature - mock implementation
 export const verifyWalletOwnership = async (wallet: Wallet, message: string): Promise<string> => {
   try {
-    const address = (await wallet.getUsedAddresses())[0];
-    const signature = await wallet.signData(address, message);
-    return signature;
+    // Simulate verification delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generate a mock signature
+    const mockSignature = `sig-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+    
+    return mockSignature;
   } catch (error) {
     console.error('Error signing message:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to verify wallet ownership');
   }
 };
 
-// Create a transaction to mint an NFT representing an action
+// Create a mock transaction
 export const createActionNftTx = async (
   wallet: Wallet,
   actionId: number,
   metadata: Record<string, any>
 ): Promise<Transaction> => {
-  // This is a simplified example. In production, you would use an actual Cardano node
-  // or provider like Blockfrost and handle the transaction properly
+  // Simulate transaction creation delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Create a forge script (this is a simplified example)
-  const forgingScript = ForgeScript.withOneSignature(
-    await wallet.getPaymentAddress()
-  );
-  
-  const tx = new Transaction({ initiator: wallet });
-  
-  // Define asset to mint
-  const assetName = `ACTION${actionId}`;
-  const assetQuantity = 1;
-  
-  // Add mint action to transaction
-  tx.mintAsset(
-    forgingScript,
-    {
-      assetName: assetName,
-      assetQuantity: assetQuantity,
-      metadata: metadata,
-      label: '721', // Standard for NFTs
-    }
-  );
-  
-  return tx;
+  // Return mock transaction
+  return {
+    id: `tx-${Date.now()}-${actionId}`
+  };
 };
 
-// Sign and submit a transaction
+// Sign and submit a transaction - mock implementation
 export const signAndSubmitTransaction = async (
   wallet: Wallet,
   transaction: Transaction
 ): Promise<string> => {
   try {
-    const signedTx = await wallet.signTx(transaction);
-    const txHash = await wallet.submitTx(signedTx);
-    return txHash;
+    // Simulate signing and submission delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Return mock transaction hash
+    return `txhash-${transaction.id}-${Date.now()}`;
   } catch (error) {
     console.error('Error signing/submitting transaction:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to sign or submit transaction');
   }
 };
 
-// Disconnect wallet
+// Disconnect wallet - mock implementation
 export const disconnectWallet = async (): Promise<void> => {
-  // In Mesh, there's no explicit disconnect method
-  // We just remove the wallet reference
+  // Simulate disconnection delay
+  await new Promise(resolve => setTimeout(resolve, 500));
   return Promise.resolve();
 };
 

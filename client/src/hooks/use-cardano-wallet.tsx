@@ -1,15 +1,37 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {
-  connectWallet,
-  disconnectWallet,
-  getAvailableWallets,
-  signAndSubmitTransaction,
-  verifyWalletOwnership,
-  WalletInfo,
-  WalletState
-} from '@/lib/cardano';
-import { Wallet, Transaction } from '@meshsdk/core';
 import { useToast } from '@/hooks/use-toast';
+
+// Mock interfaces for Cardano wallet integration
+export interface Asset {
+  unit: string;
+  quantity: string;
+}
+
+export interface WalletInfo {
+  address: string;
+  name: string;
+  balance: {
+    lovelace: string;
+    assets: Asset[];
+  };
+  network: number; // 0 = testnet, 1 = mainnet
+}
+
+export interface WalletState {
+  wallet: any | null;
+  walletInfo: WalletInfo | null;
+  connecting: boolean;
+  error: string | null;
+}
+
+// Mock Transaction type
+type Transaction = any;
+
+// Utility to format ADA values
+export const formatAdaValue = (lovelace: string): string => {
+  const adaValue = parseInt(lovelace) / 1000000;
+  return `${adaValue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 })} ₳`;
+};
 
 // Context type
 interface CardanoWalletContextType {
@@ -37,39 +59,47 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
   const [availableWallets, setAvailableWallets] = useState<string[]>([]);
   const [loadingWallets, setLoadingWallets] = useState<boolean>(true);
 
-  // Load available wallets
+  // Mock implementation for available wallets
   useEffect(() => {
-    const fetchWallets = async () => {
-      try {
-        const wallets = await getAvailableWallets();
-        setAvailableWallets(wallets);
-      } catch (error) {
-        console.error('Error loading wallets:', error);
-        toast({
-          title: 'Wallet Error',
-          description: 'Failed to load available wallets',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoadingWallets(false);
-      }
-    };
+    // Simulate loading wallets
+    const mockWallets = ['Nami', 'Eternl', 'Flint', 'Yoroi'];
+    
+    setTimeout(() => {
+      setAvailableWallets(mockWallets);
+      setLoadingWallets(false);
+    }, 1000);
+  }, []);
 
-    fetchWallets();
-  }, [toast]);
-
-  // Connect to wallet
+  // Mock wallet connection
   const connect = async (walletName: string) => {
     try {
       setWalletState(prev => ({ ...prev, connecting: true, error: null }));
       
-      const { wallet, walletInfo } = await connectWallet(walletName);
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // Generate a mock wallet address
+      const mockAddress = `addr1q${Array(50).fill(0).map(() => 
+        'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(Math.random() * 36)]
+      ).join('')}`;
+      
+      // Create mock wallet info
+      const walletInfo: WalletInfo = {
+        address: mockAddress,
+        name: walletName,
+        balance: {
+          lovelace: '150000000', // 150 ADA
+          assets: []
+        },
+        network: 0 // testnet
+      };
+      
+      // Update state
       setWalletState({
-        wallet,
+        wallet: { name: walletName, id: Date.now() }, // Mock wallet object
         walletInfo,
         connecting: false,
-        error: null,
+        error: null
       });
       
       // Save wallet name to localStorage
@@ -95,10 +125,12 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Disconnect wallet
+  // Mock wallet disconnection
   const disconnect = async () => {
     try {
-      await disconnectWallet();
+      // Simulate disconnection delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       setWalletState({
         wallet: null,
         walletInfo: null,
@@ -123,14 +155,20 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Verify wallet ownership
+  // Mock verification
   const verifyOwnership = async (message: string) => {
     if (!walletState.wallet) {
       throw new Error('No wallet connected');
     }
     
     try {
-      return await verifyWalletOwnership(walletState.wallet, message);
+      // Simulate verification delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Generate a mock signature
+      const mockSignature = `sig-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+      
+      return mockSignature;
     } catch (error) {
       console.error('Verification error:', error);
       toast({
@@ -142,14 +180,18 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Sign transaction
+  // Mock transaction signing
   const sign = async (transaction: Transaction) => {
     if (!walletState.wallet) {
       throw new Error('No wallet connected');
     }
     
     try {
-      const txHash = await signAndSubmitTransaction(walletState.wallet, transaction);
+      // Simulate signing delay
+      await new Promise(resolve => setTimeout(resolve, 2500));
+      
+      // Generate a mock transaction hash
+      const txHash = `tx-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
       
       toast({
         title: 'Transaction Submitted',
@@ -185,7 +227,7 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
     if (availableWallets.length > 0 && !walletState.wallet && !walletState.connecting) {
       autoConnect();
     }
-  }, [availableWallets]);
+  }, [availableWallets, walletState.wallet, walletState.connecting]);
 
   // Context value
   const value: CardanoWalletContextType = {

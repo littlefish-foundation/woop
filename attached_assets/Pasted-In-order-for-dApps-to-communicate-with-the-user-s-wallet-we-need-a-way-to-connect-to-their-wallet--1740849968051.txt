@@ -1,0 +1,129 @@
+In order for dApps to communicate with the user's wallet, we need a way to connect to their wallet.
+
+Add this CardanoWallet to allow the user to select a wallet to connect to your dApp. After the wallet is connected, see Browser Wallet for a list of CIP-30 APIs.
+
+The signature for the CardanoWallet component is as follows:
+
+
+{
+  label?: string;
+  onConnected?: Function;
+  isDark?: boolean;
+}
+Customization
+For dark mode style, add isDark.
+
+
+<CardanoWallet isDark={false} />
+For a custom label, add the label prop.
+
+
+<CardanoWallet label={"Connect Wallet"} />
+The customization is limited. For more customization, you can easily build your own wallet connection component. If you are using React, the React hooks will be useful. You may also take reference from this component.
+
+Persist user session
+If you would like to save the user last connected wallet and automatically connect to it on the next visit, you can use the persist prop.
+
+
+<CardanoWallet
+  persist={true}
+/>
+onConnected
+If you want to run a function after the wallet is connected, you can add the onConnected prop.
+
+
+export default function Page() {
+
+  function afterConnectedWallet() {
+    // do something
+  }
+
+  return (
+    <>
+      <CardanoWallet onConnected={afterConnectedWallet} />
+    </>
+  );
+}
+The above code will log "Hello, World!" to the console when the wallet is connected.
+
+CIP 95
+You can also provide an extensions object to enable specific CIPs. For example, to enable CIP-95, you would pass:
+
+
+<CardanoWallet
+  extensions={[95]}
+/>
+Decentralized WebRTC dApp-Wallet Communication (CIP 45)
+CIP-45 is a communication method between dApps and wallets based on WebTorrent trackers and WebRTC. Using WebTorrent trackers for the peer discovery to remove the need of this central component.
+
+Burner wallet
+Burner wallets are wallets that are created on the fly on the user's device. They are temporary wallets useful for testing purposes. The private keys are generated and stored on the user's device.
+
+
+<CardanoWallet
+  burnerWallet={{
+    networkId: 0,
+    provider: blockchainProvider,
+  }}
+/>
+MetaMask Snaps
+MetaMask Snaps are a new way to extend MetaMask with custom functionality and integrations. You can check the implementation to integrate NuFi from the GitHub repository.
+
+Use the injectFn prop to add custom functionality.
+
+
+<CardanoWallet
+  injectFn={async () => await checkIfMetamaskInstalled("preprod")}
+/>
+Connect Wallet Component
+Connect to user's wallet to interact with dApp
+
+
+import { CardanoWallet } from '@meshsdk/react';
+
+export default function Page() {
+  return (
+    <>
+      <CardanoWallet
+        label={"Connect a Wallet"}
+        persist={true}
+        onConnected={()=>{console.log('on connected')}}
+        cardanoPeerConnect={{
+          dAppInfo: {
+            name: "Mesh SDK",
+            url: "https://meshjs.dev/",
+          },
+          announce: [
+            "wss://dev.btt.cf-identity-wallet.metadata.dev.cf-deployments.org",
+          ],
+        }}
+        burnerWallet={{
+          networkId: 0,
+          provider: provider,
+        }}
+      />
+    </>
+  );
+}
+Connect a Wallet
+useWallet Hook
+
+Provide information on the current wallet's state, and functions for connecting and disconnecting user wallet.
+
+
+const { wallet, state, connected, name, connecting, connect, disconnect, error } = useWallet();
+wallet is a Browser Wallet instance, which expose all CIP wallets functions from getting assets to signing tranasction.
+
+state, a enum string, the state of the wallet, can be NOT_CONNECTED, CONNECTING or CONNECTED.
+
+connected, a boolean, true if user's wallet is connected.
+
+name, a string, the name of the connect wallet.
+
+connecting, a boolean, true if the wallet is connecting and initializing.
+
+connect(walletName: string), a function, provide the wallet name to connect wallet. Retrive a list of available wallets with useWalletList().
+
+disconnect(), a function, to disconnect the connected wallet.
+
+error, returns the error object if any error occurs during wallet connection, such as "account not set".
