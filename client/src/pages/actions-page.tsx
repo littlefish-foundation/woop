@@ -395,7 +395,7 @@ export default function ActionsPage() {
                   <CardContent className="p-5">
                     <div className="flex items-center mb-3">
                       <Avatar className="h-9 w-9 mr-3">
-                        <AvatarImage src={user?.avatar} alt={getCreatorName(action)} />
+                        <AvatarImage src={`https://i.pravatar.cc/150?img=${action.creatorId + 10}`} alt={getCreatorName(action)} />
                         <AvatarFallback>{getCreatorName(action).charAt(0)}</AvatarFallback>
                       </Avatar>
                       <div>
@@ -467,7 +467,7 @@ export default function ActionsPage() {
                     <CardContent className="p-5">
                       <div className="flex items-center mb-3">
                         <Avatar className="h-9 w-9 mr-3">
-                          <AvatarImage src={user?.avatar} alt={getCreatorName(action)} />
+                          <AvatarImage src={`https://i.pravatar.cc/150?img=${action.creatorId + 10}`} alt={getCreatorName(action)} />
                           <AvatarFallback>{getCreatorName(action).charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -480,7 +480,7 @@ export default function ActionsPage() {
                       <div className="flex items-center space-x-4 text-xs text-gray-500 mb-4">
                         <div className="flex items-center">
                           <Calendar className="h-3.5 w-3.5 mr-1" />
-                          <span>{formatDate(action.createdAt)}</span>
+                          <span>{formatDate(new Date(action.createdAt))}</span>
                         </div>
                         <div className="flex items-center">
                           <MapPin className="h-3.5 w-3.5 mr-1" />
