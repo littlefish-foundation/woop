@@ -95,8 +95,18 @@ export default function WooperativesPage() {
 
   // Function to handle wooperative creation
   const handleCreateWooperative = async (data: CreateWooperativeForm) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to create a wooperative.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      await apiRequest("POST", "/api/wooperatives", data);
+      const res = await apiRequest("POST", "/api/wooperatives", data);
+      const wooperative = await res.json();
       queryClient.invalidateQueries({ queryKey: ["/api/wooperatives"] });
       queryClient.invalidateQueries({ queryKey: ["/api/my-wooperatives"] });
       setCreateDialogOpen(false);
@@ -106,9 +116,10 @@ export default function WooperativesPage() {
         description: "Your wooperative has been created successfully.",
       });
     } catch (error) {
+      console.error('Error creating wooperative:', error);
       toast({
         title: "Error",
-        description: "Failed to create wooperative. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to create wooperative. Please try again.",
         variant: "destructive",
       });
     }

@@ -4,7 +4,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { eq, and, count } from "drizzle-orm";
+import { eq, and, count, inArray } from "drizzle-orm";
 import { Pool } from "@neondatabase/serverless";
 
 const MemoryStore = createMemoryStore(session);
@@ -121,13 +121,24 @@ export class MemStorage implements IStorage {
   }
 
   async getWooperativesByUser(userId: number): Promise<Wooperative[]> {
-    const userMemberships = Array.from(this.memberships.values()).filter(
-      (membership) => membership.userId === userId
-    );
+    // Get all memberships for this user
+    const userMemberships = await db
+      .select()
+      .from(memberships)
+      .where(eq(memberships.userId, userId));
+
+    // If no memberships, return empty array
+    if (userMemberships.length === 0) return [];
+
+    // Get all wooperatives for these memberships
+    const wooperativeIds = userMemberships.map(m => m.wooperativeId);
     
-    return userMemberships.map(
-      (membership) => this.wooperatives.get(membership.wooperativeId)!
-    );
+    if (wooperativeIds.length === 0) return [];
+    
+    return await db
+      .select()
+      .from(wooperatives)
+      .where(inArray(wooperatives.id, wooperativeIds));
   }
 
   async createWooperative(insertWooperative: InsertWooperative): Promise<Wooperative> {
@@ -447,12 +458,14 @@ export class DatabaseStorage implements IStorage {
     if (userMemberships.length === 0) return [];
 
     // Get all wooperatives for these memberships
+    const wooperativeIds = userMemberships.map(m => m.wooperativeId);
+    
+    if (wooperativeIds.length === 0) return [];
+    
     return await db
       .select()
       .from(wooperatives)
-      .where(
-        wooperatives.id.in(userMemberships.map(m => m.wooperativeId))
-      );
+      .where(inArray(wooperatives.id, wooperativeIds));
   }
 
   async createWooperative(insertWooperative: InsertWooperative): Promise<Wooperative> {
@@ -490,14 +503,18 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     // Update the member count for the wooperative
+    // First, count the memberships
+    const result = await db
+      .select({ count: count() })
+      .from(memberships)
+      .where(eq(memberships.wooperativeId, insertMembership.wooperativeId));
+    
+    const memberCount = result[0].count;
+    
+    // Then update the wooperative with the count
     await db
       .update(wooperatives)
-      .set({
-        memberCount: db
-          .select({ count: count() })
-          .from(memberships)
-          .where(eq(memberships.wooperativeId, insertMembership.wooperativeId))
-      })
+      .set({ memberCount })
       .where(eq(wooperatives.id, insertMembership.wooperativeId));
     
     return membership;

@@ -7,6 +7,7 @@ import { ImpactDashboard } from "@/components/home/impact-dashboard";
 import { CTASection } from "@/components/home/cta-section";
 import { useQuery } from "@tanstack/react-query";
 import type { Wooperative, Action } from "@shared/schema";
+import { WalletTest } from '@/components/wallet/wallet-test';
 
 export default function HomePage() {
   const { data: wooperatives = [] } = useQuery<Wooperative[]>({
@@ -38,6 +39,9 @@ export default function HomePage() {
       <RecentActions actions={actions.slice(0, 3)} />
       <ImpactDashboard />
       <CTASection />
+      <div className="mt-8">
+        <WalletTest />
+      </div>
     </MainLayout>
   );
 }

@@ -222,6 +222,23 @@ export function WalletConnect() {
                 </Badge>
               </div>
             )}
+            {/* Display additional handles if available */}
+            {walletState.walletInfo?.handles && walletState.walletInfo.handles.length > 1 && (
+              <div className="mt-2">
+                <p className="text-xs text-muted-foreground mb-1">Additional handles:</p>
+                <div className="flex flex-wrap gap-1">
+                  {walletState.walletInfo.handles.slice(1).map((handle, index) => (
+                    <Badge 
+                      key={index} 
+                      variant="outline" 
+                      className="bg-blue-50 text-blue-700 border-blue-200 text-xs font-medium py-0.5 px-1.5"
+                    >
+                      ${handle}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="text-xs text-muted-foreground break-all">{walletState.walletInfo?.address}</p>
           </div>
           

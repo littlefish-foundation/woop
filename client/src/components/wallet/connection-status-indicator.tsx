@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useCardanoWallet } from "@/hooks/use-cardano-wallet";
+import { useMeshWallet } from "@/hooks/use-mesh-wallet";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Loader2, Check, X, AlertCircle } from "lucide-react";
@@ -7,7 +7,7 @@ import { Loader2, Check, X, AlertCircle } from "lucide-react";
 type ConnectionStatus = "disconnected" | "connecting" | "connected" | "error";
 
 export function ConnectionStatusIndicator() {
-  const { walletState } = useCardanoWallet();
+  const { walletState } = useMeshWallet();
   const [status, setStatus] = useState<ConnectionStatus>("disconnected");
   const [visible, setVisible] = useState(false);
   

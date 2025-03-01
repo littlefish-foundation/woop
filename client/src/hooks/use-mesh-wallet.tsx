@@ -1,31 +1,67 @@
 /**
- * This is a placeholder hook for future MeshSDK integration.
- * It's not currently used but provides a template for implementation.
+ * This is an implementation of the MeshSDK wallet provider.
+ * It uses the actual MeshSDK to interact with Cardano wallets.
  */
 
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { initPolyfills } from '@/lib/polyfills';
+// Import mesh-specific polyfills
+import '@/lib/mesh-polyfill';
 
-// This type will need to be updated with actual MeshSDK types
-type MeshWalletContextType = {
-  connected: boolean;
-  connecting: boolean;
-  walletAddress: string | null;
-  walletName: string | null;
+// Add type declaration for cardano property on Window
+declare global {
+  interface Window {
+    cardano?: {
+      nami?: any;
+      eternl?: any;
+      flint?: any;
+      vespr?: any;
+      [key: string]: any;
+    };
+  }
+}
+
+// Types for wallet integration
+export interface Asset {
+  unit: string;
+  quantity: string;
+  fingerprint?: string;
+  policyId?: string;
+  assetName?: string;
+}
+
+export interface WalletInfo {
+  address: string;
+  handle: string | null;
+  handles: string[] | null;
+  name: string;
   balance: {
     lovelace: string;
-    assets: Array<{
-      unit: string;
-      quantity: string;
-    }>;
-  } | null;
+    assets: Asset[];
+  };
+  network: number; // 0 = testnet, 1 = mainnet
+  rewardAddress: string | null;
+}
+
+export interface WalletState {
+  wallet: any | null;
+  walletInfo: WalletInfo | null;
+  connecting: boolean;
+  error: string | null;
+}
+
+// Context type
+interface MeshWalletContextType {
+  walletState: WalletState;
+  availableWallets: Array<{ name: string; icon: string; version: string }>;
+  loadingWallets: boolean;
   connect: (walletName: string) => Promise<void>;
   disconnect: () => Promise<void>;
-  signMessage: (message: string) => Promise<string>;
+  verifyOwnership: (message: string) => Promise<string>;
   signTransaction: (tx: any) => Promise<string>;
-  error: string | null;
-};
+  refreshWalletInfo: () => Promise<void>;
+}
 
 export const MeshWalletContext = createContext<MeshWalletContextType | null>(null);
 
@@ -38,128 +74,299 @@ export function MeshWalletProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
   // State management for wallet connection
-  const [connected, setConnected] = useState(false);
-  const [connecting, setConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
-  const [walletName, setWalletName] = useState<string | null>(null);
-  const [balance, setBalance] = useState<MeshWalletContextType['balance']>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [walletState, setWalletState] = useState<WalletState>({
+    wallet: null,
+    walletInfo: null,
+    connecting: false,
+    error: null,
+  });
+  const [availableWallets, setAvailableWallets] = useState<Array<{ name: string; icon: string; version: string }>>([]);
+  const [loadingWallets, setLoadingWallets] = useState<boolean>(true);
+  const [meshSDK, setMeshSDK] = useState<any>(null);
+  
+  // Load MeshSDK and available wallets on component mount
+  useEffect(() => {
+    const loadMeshSDK = async () => {
+      try {
+        setLoadingWallets(true);
+        
+        // Ensure polyfills are initialized before importing MeshSDK
+        initPolyfills();
+        
+        // Dynamically import MeshSDK to avoid SSR issues
+        const { BrowserWallet } = await import('@meshsdk/core');
+        setMeshSDK({ BrowserWallet });
+        
+        // Get available wallets
+        const wallets = await BrowserWallet.getInstalledWallets();
+        setAvailableWallets(wallets);
+      } catch (error) {
+        console.error('Failed to load MeshSDK:', error);
+        // Fallback to empty wallets list
+        setAvailableWallets([]);
+      } finally {
+        setLoadingWallets(false);
+      }
+    };
+    
+    loadMeshSDK();
+  }, []);
+  
+  // Fetch handle information from Blockfrost
+  const fetchHandleInfo = async (address: string): Promise<{ handle: string | null; handles: string[] | null }> => {
+    try {
+      const response = await fetch(`/api/handle/${address}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch handle info');
+      }
+      
+      const data = await response.json();
+      return {
+        handle: data.handle,
+        handles: data.handles
+      };
+    } catch (error) {
+      console.error('Error fetching handle info:', error);
+      return { handle: null, handles: null };
+    }
+  };
+  
+  // Refresh wallet info (balance, etc.)
+  const refreshWalletInfo = async () => {
+    if (!walletState.wallet || !walletState.walletInfo) {
+      return;
+    }
+    
+    try {
+      const walletAPI = walletState.wallet;
+      
+      // Get wallet address
+      const address = await walletAPI.getChangeAddress();
+      
+      // Get wallet balance
+      const lovelace = await walletAPI.getLovelace();
+      const assets = await walletAPI.getAssets();
+      
+      // Format assets for our interface
+      const formattedAssets = Object.entries(assets).map(([unit, quantity]) => ({
+        unit,
+        quantity: String(quantity) // Ensure quantity is a string
+      }));
+      
+      // Get handle info
+      const { handle, handles } = await fetchHandleInfo(address);
+      
+      // Update wallet info
+      setWalletState(prev => ({
+        ...prev,
+        walletInfo: {
+          ...prev.walletInfo!,
+          address,
+          handle,
+          handles,
+          balance: {
+            lovelace: lovelace.toString(),
+            assets: formattedAssets
+          }
+        }
+      }));
+      
+      toast({
+        title: 'Wallet Updated',
+        description: 'Wallet information has been refreshed',
+      });
+    } catch (error) {
+      console.error('Error refreshing wallet info:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to refresh wallet information',
+        variant: 'destructive',
+      });
+    }
+  };
   
   // Connect to wallet
-  const connect = async (name: string) => {
-    try {
-      setConnecting(true);
-      setError(null);
-      
-      // TODO: Implement MeshSDK connection logic
-      // Example:
-      // const wallet = await window.cardano[name].enable();
-      // const address = await wallet.getChangeAddress();
-      // const utxos = await wallet.getUtxos();
-      
-      // For now, we're using mock data
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setWalletAddress('addr1qxy8z0kpw94f2tjn7dh7gmguzj2luqx47vgzncss8xnp7v4uxuu2vgdg08lwv5jfhvln5xfj0qr22pug5kh4wh65nzeqjmyxg4');
-      setWalletName(name);
-      setBalance({
-        lovelace: '28240000', // 28.24 ADA
-        assets: []
+  const connect = async (walletName: string) => {
+    if (!meshSDK) {
+      toast({
+        title: 'SDK Not Loaded',
+        description: 'MeshSDK is not loaded yet. Please try again.',
+        variant: 'destructive',
       });
-      setConnected(true);
+      return;
+    }
+    
+    try {
+      setWalletState(prev => ({ ...prev, connecting: true, error: null }));
+      
+      // Connect to wallet using MeshSDK
+      const { BrowserWallet } = meshSDK;
+      const walletAPI = await BrowserWallet.enable(walletName);
+      
+      // Get wallet address
+      const address = await walletAPI.getChangeAddress();
+      
+      // Get reward address
+      let rewardAddress = null;
+      try {
+        const rewardAddresses = await walletAPI.getRewardAddresses();
+        rewardAddress = rewardAddresses[0] || null;
+      } catch (error) {
+        console.error('Failed to get reward address:', error);
+      }
+      
+      // Get wallet balance
+      const lovelace = await walletAPI.getLovelace();
+      const assets = await walletAPI.getAssets();
+      
+      // Format assets for our interface
+      const formattedAssets = Object.entries(assets).map(([unit, quantity]) => ({
+        unit,
+        quantity: String(quantity) // Ensure quantity is a string
+      }));
+      
+      // Get handle info
+      const { handle, handles } = await fetchHandleInfo(address);
+      
+      // Update wallet state
+      setWalletState({
+        wallet: walletAPI,
+        walletInfo: {
+          address,
+          handle,
+          handles,
+          name: walletName,
+          balance: {
+            lovelace: lovelace.toString(),
+            assets: formattedAssets
+          },
+          network: 1, // mainnet
+          rewardAddress
+        },
+        connecting: false,
+        error: null
+      });
+      
+      // Save wallet name to localStorage
+      localStorage.setItem('cardanoWallet', walletName);
       
       toast({
         title: 'Wallet Connected',
-        description: `Connected to ${name}`,
+        description: `Connected to ${walletName}`,
       });
-    } catch (err) {
-      console.error('Failed to connect wallet:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error connecting wallet');
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+      setWalletState(prev => ({
+        ...prev,
+        connecting: false,
+        error: error instanceof Error ? error.message : 'Unknown error connecting wallet',
+      }));
       
       toast({
         title: 'Connection Failed',
-        description: err instanceof Error ? err.message : 'Failed to connect wallet',
+        description: error instanceof Error ? error.message : 'Failed to connect wallet',
         variant: 'destructive',
       });
-    } finally {
-      setConnecting(false);
     }
   };
   
   // Disconnect wallet
   const disconnect = async () => {
     try {
-      // TODO: Implement MeshSDK disconnection logic
+      setWalletState({
+        wallet: null,
+        walletInfo: null,
+        connecting: false,
+        error: null,
+      });
       
-      setConnected(false);
-      setWalletAddress(null);
-      setWalletName(null);
-      setBalance(null);
+      // Remove from localStorage
+      localStorage.removeItem('cardanoWallet');
       
       toast({
         title: 'Wallet Disconnected',
         description: 'Successfully disconnected wallet',
       });
-    } catch (err) {
-      console.error('Failed to disconnect wallet:', err);
+    } catch (error) {
+      console.error('Failed to disconnect wallet:', error);
       
       toast({
         title: 'Disconnect Failed',
-        description: err instanceof Error ? err.message : 'Failed to disconnect wallet',
+        description: error instanceof Error ? error.message : 'Failed to disconnect wallet',
         variant: 'destructive',
       });
     }
   };
   
   // Sign message for wallet verification
-  const signMessage = async (message: string): Promise<string> => {
+  const verifyOwnership = async (message: string): Promise<string> => {
+    if (!walletState.wallet) {
+      throw new Error('Wallet not connected');
+    }
+    
     try {
-      if (!connected || !walletName) {
-        throw new Error('Wallet not connected');
-      }
+      // Use the wallet's signData method
+      const signature = await walletState.wallet.signData(walletState.walletInfo?.address || '', message);
       
-      // TODO: Implement MeshSDK message signing
-      
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return `signed-${Date.now()}`;
-    } catch (err) {
-      console.error('Failed to sign message:', err);
-      throw err;
+      return JSON.stringify(signature);
+    } catch (error) {
+      console.error('Failed to sign message:', error);
+      throw error;
     }
   };
   
   // Sign transaction
   const signTransaction = async (tx: any): Promise<string> => {
+    if (!walletState.wallet) {
+      throw new Error('Wallet not connected');
+    }
+    
     try {
-      if (!connected || !walletName) {
-        throw new Error('Wallet not connected');
-      }
+      // Use the wallet's signTx method
+      const signedTx = await walletState.wallet.signTx(tx);
       
-      // TODO: Implement MeshSDK transaction signing
+      toast({
+        title: 'Transaction Signed',
+        description: 'Transaction has been signed successfully',
+      });
       
-      // Mock implementation
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      return `tx-${Date.now()}`;
-    } catch (err) {
-      console.error('Failed to sign transaction:', err);
-      throw err;
+      return signedTx;
+    } catch (error) {
+      console.error('Failed to sign transaction:', error);
+      throw error;
     }
   };
+  
+  // Auto-connect to last used wallet on startup
+  useEffect(() => {
+    const autoConnect = async () => {
+      const savedWallet = localStorage.getItem('cardanoWallet');
+      if (savedWallet && meshSDK && availableWallets.some(wallet => wallet.name === savedWallet)) {
+        try {
+          await connect(savedWallet);
+        } catch (error) {
+          console.error('Auto-connect failed:', error);
+          // Don't show toast for auto-connect failures
+        }
+      }
+    };
+
+    if (availableWallets.length > 0 && !walletState.wallet && !walletState.connecting && meshSDK) {
+      autoConnect();
+    }
+  }, [availableWallets, walletState.wallet, walletState.connecting, meshSDK]);
   
   return (
     <MeshWalletContext.Provider
       value={{
-        connected,
-        connecting,
-        walletAddress,
-        walletName,
-        balance,
+        walletState,
+        availableWallets,
+        loadingWallets,
         connect,
         disconnect,
-        signMessage,
+        verifyOwnership,
         signTransaction,
-        error,
+        refreshWalletInfo
       }}
     >
       {children}
