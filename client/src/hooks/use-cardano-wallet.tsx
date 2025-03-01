@@ -88,7 +88,7 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
         address: mockAddress,
         name: walletName,
         balance: {
-          lovelace: '150000000', // 150 ADA
+          lovelace: '28240000', // 28.24 ADA
           assets: []
         },
         network: 0 // testnet
