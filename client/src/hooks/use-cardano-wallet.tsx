@@ -90,17 +90,29 @@ export function CardanoWalletProvider({ children }: { children: ReactNode }) {
         // Use one of the sample addresses from Blockfrost docs or generate demo data
         // This is for demo purposes - in production we'd use the actual connected wallet address
         const testAddress = "addr1q8zsjx7vxkl4esfejafhxthyew8c54c9ch95gkv3nz37sxrc9ty742qncmffaesxqarvqjmxmy36d9aht2duhmhvekgq3jd3w2";
+        console.log("Fetching wallet data from Blockfrost...");
+        
         const response = await fetch(`/api/blockfrost/address/${testAddress}`);
         if (response.ok) {
           walletBalance = await response.json();
+          console.log("Blockfrost data received:", walletBalance);
+          
+          // Force the generation of a random amount for testing UI updates
+          if (Math.random() > 0.5) {
+            const randomAmount = Math.floor(Math.random() * 50000000 + 1000000);
+            console.log(`Overriding with random amount: ${randomAmount} lovelace`);
+            walletBalance.lovelace = randomAmount.toString();
+          }
         } else {
           throw new Error('Failed to fetch wallet balance');
         }
       } catch (balanceError) {
         console.error('Error fetching balance:', balanceError);
         // Fallback to dynamic random balance for demo
+        const randomAmount = Math.floor(Math.random() * 50000000 + 1000000);
+        console.log(`Using fallback random amount: ${randomAmount} lovelace`);
         walletBalance = {
-          lovelace: Math.floor(Math.random() * 50000000 + 1000000).toString(), // Random between 1-50 ADA
+          lovelace: randomAmount.toString(), // Random between 1-50 ADA
           assets: []
         };
       }
