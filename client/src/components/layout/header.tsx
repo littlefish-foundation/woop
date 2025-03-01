@@ -146,7 +146,7 @@ export function Header() {
           
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-2">
-            <MeshWalletConnect />
+            <WalletConnect />
             {mounted && user && <WalletAuth />}
           </div>
           
@@ -183,7 +183,7 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-4 flex flex-col space-y-2">
-                <MeshWalletConnect />
+                <WalletConnect />
                 {mounted && user && <WalletAuth />}
               </div>
             </nav>
