@@ -23,9 +23,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+// Import both wallet implementations - the original and the MeshSDK version
 import { WalletConnect } from "@/components/wallet/wallet-connect";
+import { MeshWalletConnect } from "@/components/wallet/mesh-wallet-connect";
 import { WalletAuth } from "@/components/wallet/wallet-auth";
-import { useCardanoWallet } from "@/hooks/use-cardano-wallet";
 
 export function Header() {
   const [location] = useLocation();
@@ -145,7 +146,7 @@ export function Header() {
           
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center space-x-2">
-            <WalletConnect />
+            <MeshWalletConnect />
             {mounted && user && <WalletAuth />}
           </div>
           
@@ -182,7 +183,7 @@ export function Header() {
                 </Link>
               ))}
               <div className="mt-4 flex flex-col space-y-2">
-                <WalletConnect />
+                <MeshWalletConnect />
                 {mounted && user && <WalletAuth />}
               </div>
             </nav>
